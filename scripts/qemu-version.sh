@@ -9,7 +9,7 @@ version="$3"
 if [ -z "$pkgversion" ]; then
     cd "$dir"
     if [ -e .git ]; then
-        pkgversion=$(git describe --match 'v*' --dirty) || :
+        pkgversion=$(GIT_TERMINAL_PROMPT=0 git describe --match 'v*' --dirty) || :
     fi
 fi
 

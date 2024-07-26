@@ -1797,9 +1797,37 @@ if get_option('gtk') \
   endif
 endif
 
+gtk4 = not_found
+gtk4x11 = not_found
+
+if get_option('gtk4') \
+             .disable_auto_if(not have_system) \
+             .require(pixman.found(),
+                      error_message: 'cannot enable GTK4 if pixman is not available') \
+             .require(opengl.found(),
+                      error_message: 'cannot enable GTK4 if opengl is not available') \
+             .require(gbm.found(),
+                      error_message: 'cannot enable GTK4 if GBM is not available') \
+             .allowed()
+  gtk4 = dependency('gtk4', version: '>=4.14.0',
+                    method: 'pkg-config',
+                    required: get_option('gtk4'))
+  if gtk4.found()
+    gtk4x11 = dependency('gtk4-x11', version: '>=4.14.0',
+                         method: 'pkg-config',
+                         required: false)
+    gtk4 = declare_dependency(dependencies: [gtk4, gtk4x11],
+                              version: gtk4.version())
+  endif
+endif
+
+if gtk.found() and gtk4.found() and not enable_modules
+  error('Either GTK+ or GTK4 can be built when not using modules')
+endif
+
 x11 = not_found
-if gtkx11.found()
-  x11 = dependency('x11', method: 'pkg-config', required: gtkx11.found())
+if gtkx11.found() or gtk4x11.found()
+  x11 = dependency('x11', method: 'pkg-config', required: gtkx11.found() or gtk4x11.found())
 endif
 png = not_found
 if get_option('png').allowed() and have_system
@@ -2293,7 +2321,7 @@ if glusterfs.found()
   config_host_data.set('CONFIG_GLUSTERFS_IOCB_HAS_STAT', glusterfs_iocb_has_stat)
 endif
 config_host_data.set('CONFIG_GTK', gtk.found())
-config_host_data.set('CONFIG_VTE', vte.found())
+config_host_data.set('CONFIG_GTK4', gtk4.found())
 config_host_data.set('CONFIG_GTK_CLIPBOARD', have_gtk_clipboard)
 config_host_data.set('CONFIG_HEXAGON_IDEF_PARSER', get_option('hexagon_idef_parser'))
 config_host_data.set('CONFIG_LIBATTR', have_old_libattr)
@@ -4111,7 +4139,7 @@ subdir('tools')
 subdir('pc-bios')
 subdir('docs')
 subdir('tests')
-if gtk.found()
+if gtk.found() or gtk4.found()
   subdir('po')
 endif
 
@@ -4391,6 +4419,7 @@ endif
 summary_info += {'SDL support':       sdl}
 summary_info += {'SDL image support': sdl_image}
 summary_info += {'GTK support':       gtk}
+summary_info += {'GTK4 support':      gtk4}
 summary_info += {'pixman':            pixman}
 summary_info += {'VTE support':       vte}
 summary_info += {'PNG support':       png}

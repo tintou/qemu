@@ -119,6 +119,19 @@ if gtk.found()
   ui_modules += {'gtk' : gtk_ss}
 endif
 
+if gtk4.found()
+  if host_os == 'windows'
+    system_ss.add(files('win32-kbd-hook.c'))
+  endif
+
+  gtk4_ss = ss.source_set()
+  gtk4_ss.add(gtk4, pixman, opengl, files('gtk4.c'))
+#  gtk4_ss.add(when: x11, if_true: files('x_keymap.c'))
+#  gtk4_ss.add(when: opengl, if_true: files('gtk-gl-area.c'))
+#  gtk4_ss.add(when: [x11, opengl], if_true: files('gtk-egl.c'))
+  ui_modules += {'gtk4' : gtk4_ss}
+endif
+
 if sdl.found()
   if host_os == 'windows'
     system_ss.add(files('win32-kbd-hook.c'))
